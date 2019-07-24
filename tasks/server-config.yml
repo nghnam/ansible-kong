@@ -73,12 +73,21 @@
 - debug: var=health
 - debug: var=run_status
 
-- name: Update kong database schema
+- name: Update kong database schema ( version 0.x.x )
   shell: >
       kong migrations up --conf {{ kong_conf_dir }}/kong.conf
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/local/bin"
-  when: run_status == "down"
+  when: run_status == "down" and kong_version|version_compare('1.0.0', '<')
+  run_once: true
+  register: migration
+
+- name: Update kong database schema ( version 1.x.x )
+  shell: >
+      kong migrations bootstrap --conf {{ kong_conf_dir }}/kong.conf
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/local/bin"
+  when: run_status == "down" and kong_version|version_compare('1.0.0', '>=')
   run_once: true
   register: migration
 
